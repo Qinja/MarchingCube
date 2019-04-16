@@ -33,6 +33,16 @@ int main()
 	QueryPerformanceCounter(&end);
 	printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
+
+	//DEBUG
+	for (int i = 0; i < 10; i++)
+	{
+		QueryPerformanceCounter(&start);
+		Mesh m = mc.MarchingCubeCore(20000.0f);
+		QueryPerformanceCounter(&end);
+		printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+	}
+
 	QueryPerformanceCounter(&start);
 		m.SaveObjToFile("./output.obj");
 	QueryPerformanceCounter(&end);

@@ -6,11 +6,10 @@
 Mesh MarchingCube::MarchingCubeCore(const float& target_value)
 {
 	const float step_size = 1.0f / max(max(cube_size_x, cube_size_y), cube_size_z);
-	uint32 VerticesCount = 0;
 	// 循环遍历每个立方体，立方体数由细分数决定
 #ifndef _DEBUG
 	const int max_threads = omp_get_max_threads();
-	#pragma omp parallel for num_threads(max_threads) schedule (static) shared(VerticesCount)
+	#pragma omp parallel for num_threads(max_threads) schedule (static)
 #endif // _DEBUG
 	for (int i = 0; i < cube_size_x - 1; ++i)
 	{
@@ -18,19 +17,24 @@ Mesh MarchingCube::MarchingCubeCore(const float& target_value)
 		{
 			for (int k = 0; k < cube_size_z - 1; ++k)
 			{
-				const uint32 num = MarchingCubeCore(mesh, target_value, i, j, k, step_size, VerticesCount);
-				VerticesCount += num;
+				const uint32 standard = i * cube_size_yz + j * cube_size_z + k;
+				const uint64 tuple = MarchingCubeCore(mesh, target_value, i, j, k, standard, step_size);
+				const uint8 triangles_edge_indices_num = tuple >> 32;
+				const uint32 currentAddress = tuple & (uint32)(-1);
+				triangleAddress[standard] = currentAddress;
+				triangleCount[standard] = triangles_edge_indices_num;
 			}
 		}
 	}
-	printf("VertexCount: %d\n", VerticesCount);
-	mesh.VerticesCount = VerticesCount;
+
+	//printf("VertexCount: %d\n", VerticesCount);
+	//mesh.VerticesCount = VerticesCount;
 	return mesh;
 }
 
-__forceinline uint32 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
+__forceinline uint64 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	, const uint16& x_index, const uint16& y_index, const uint16& z_index
-	, const float& step_size, const uint32 currentCount)const
+	, const uint32& standard, const float& step_size)const
 {
 	const Vec3 subdivie_point = Vec3(x_index, y_index, z_index)* step_size;	//样本点
 	// 交点坐标，对于算法中的e1-e12。如果不插值的直接取中点的话，是可以预先计算好的
@@ -92,12 +96,15 @@ __forceinline uint32 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& tar
 
 	//cube对应三角形的边的索引数量
 	const uint8 triangles_edge_indices_num = triangles_num * 3;
+	const uint64 currentAddress = standard * 15;
 	for (uint8 i = 0; i < triangles_edge_indices_num; ++i)
 	{
-		mesh.Vertices[currentCount + i] = isosurface_vertices_pos[a2iTriangleConnectionTable[cube8_flag_index][i]];
-		mesh.Normals[currentCount + i] = isosurface_vertices_normal[a2iTriangleConnectionTable[cube8_flag_index][i]];
+		mesh.Vertices[currentAddress + i] = isosurface_vertices_pos[a2iTriangleConnectionTable[cube8_flag_index][i]];
+		mesh.Normals[currentAddress + i] = isosurface_vertices_normal[a2iTriangleConnectionTable[cube8_flag_index][i]];
 	}
-	return triangles_edge_indices_num;
+	uint64 tuple = currentAddress + (uint64)(((uint64)triangles_edge_indices_num) << 32);
+	return tuple;
+	//return triangles_edge_indices_num;
 }
 
 __forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index

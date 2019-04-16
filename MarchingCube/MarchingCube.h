@@ -5,6 +5,7 @@
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
+typedef unsigned long long uint64;
 
 class MarchingCube
 {
@@ -35,9 +36,8 @@ private:
 		const uint16& y, const uint16& z)const;
 	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
 		, const uint16& y_index, const uint16& z_index)const;
-	__forceinline uint32 MarchingCubeCore(Mesh& mesh, const float& target_value
-		, const uint16& x_index, const uint16& y_index, const uint16& z_index
-		, const float& step_size, const uint32 currentCount)const;
+	__forceinline uint64 MarchingCubeCore(Mesh& mesh, const float& target_value, const uint16& x_index
+		, const uint16& y_index, const uint16& z_index, const uint32& standard, const float& step_size)const;
 
 	// ∂•µ„Œª÷√
 	const Vec3 cube_vertex_position[8] =

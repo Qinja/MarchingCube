@@ -43,35 +43,15 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	float cube_vertex_value[8]; // cube每个顶点的值
 	int cube8_flag_index = 0; // 标记cube的顶点状态的flag
 	int edge_flag; // 获取cube的交点flag
-	float a_offset;
 	int triangles_num = 0; // cube对应的三角形的数量
 
 
 	// 创建样本并查找cube顶点在表面内部或外部
-	for (int i = 0; i < 8; ++i)
+	for (uint8 i = 0; i < 8; ++i)
 	{
-		int x_offset = 0, y_offset = 0, z_offset = 0;
-		if (i == 1 || i == 2 || i == 5 || i == 6)
-		{
-			if (x_index != cube_size_x - 1)
-				x_offset = 1;
-			else { cube_vertex_value[i] = 0; continue; } //超出边界都设成0好了
-		}
-		if (i == 2 || i == 3 || i == 6 || i == 7)
-		{
-			if (y_index != cube_size_y - 1)
-				y_offset = 1;
-			else { cube_vertex_value[i] = 0; continue; } //超出边界都设成0好了
-		}
-		if (i == 4 || i == 5 || i == 6 || i == 7)
-		{
-			if (z_index != cube_size_z - 1)
-				z_offset = 1;
-			else { cube_vertex_value[i] = 0; continue; } //超出边界都设成0好了
-		}
-		x_offset = a2fVertexOffset[i][0];
-		y_offset = a2fVertexOffset[i][1];
-		z_offset = a2fVertexOffset[i][2]; //和上面注释掉的代码功能一致
+		const uint8 x_offset = a2fVertexOffset[i][0];
+		const uint8 y_offset = a2fVertexOffset[i][1];
+		const uint8 z_offset = a2fVertexOffset[i][2]; //和上面注释掉的代码功能一致
 		cube_vertex_value[i] = GetDataUseXYZ(data, x_index + x_offset, y_index + y_offset, z_index + z_offset);
 		if (cube_vertex_value[i] <= target_value)
 			cube8_flag_index |= 1 << i; //位运算
@@ -83,13 +63,13 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 		return;
 	}
 
-	for (int i = 0; i < 12; ++i) 
+	for (uint8 i = 0; i < 12; ++i) 
 	{
 		if (edge_flag & (1 << i)) 
 		{
 			// cube一条边的两个顶点的值之差
-			float delta = cube_vertex_value[cube_edges_indices[i][1]] - cube_vertex_value[cube_edges_indices[i][0]];
-			a_offset = 0.5f; //等值面与cube的边的交点，取cube边的中点
+			const float delta = cube_vertex_value[cube_edges_indices[i][1]] - cube_vertex_value[cube_edges_indices[i][0]];
+			float a_offset = 0.5f; //等值面与cube的边的交点，取cube边的中点
 			if (delta != 0.0)
 			{
 				a_offset = (target_value - cube_vertex_value[cube_edges_indices[i][0]]) / delta; //交点根据标量值进行插值
@@ -101,7 +81,7 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 		}
 	}
 
-	for (int i = 0; i < 5; ++i) 
+	for (uint8 i = 0; i < 5; ++i)
 	{
 		if (a2iTriangleConnectionTable[cube8_flag_index][3 * i] < 0) // <0 等价于 ==-1
 		{
@@ -111,8 +91,8 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	}
 
 	//cube对应三角形的边的索引数量
-	const int triangles_edge_indices_num = triangles_num * 3;
-	for (int i = 0; i < triangles_edge_indices_num; ++i)
+	const uint8 triangles_edge_indices_num = triangles_num * 3;
+	for (uint8 i = 0; i < triangles_edge_indices_num; ++i)
 	{
 		mesh.Vertices[mesh.VerticesCount] = isosurface_vertices_pos[a2iTriangleConnectionTable[cube8_flag_index][i]];
 		mesh.Normals[mesh.VerticesCount] = isosurface_vertices_normal[a2iTriangleConnectionTable[cube8_flag_index][i]];

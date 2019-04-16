@@ -9,21 +9,23 @@ typedef unsigned int uint32;
 class MarchingCube
 {
 public:
-	inline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
+	__forceinline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
 		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z) {}
 	Mesh MarchingCubeCore(const float& target_value)const;
-	void MarchingCubeCore(Mesh& mesh, const float& target_value
-		, const uint16& x_index, const uint16& y_index, const uint16& z_index
-		, const float& step_size, const float& scale)const;
-	Vec3 CalVerticesNormal(const uint16& x_index, const uint16& y_index, const uint16& z_index)const;
+
 private:
 	const float *data;
 	const uint16 cube_size_x;
 	const uint16 cube_size_y;
 	const uint16 cube_size_z;
 	const uint16 cube_size_yz;
-	inline float GetDataUseXYZ(const float *data, const uint16& x,
+	__forceinline float GetDataUseXYZ(const float *data, const uint16& x,
 		const uint16& y, const uint16& z)const;
+	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
+		, const uint16& y_index, const uint16& z_index)const;
+	__forceinline void MarchingCubeCore(Mesh& mesh, const float& target_value
+		, const uint16& x_index, const uint16& y_index, const uint16& z_index
+		, const float& step_size)const;
 
 	// 顶点位置
 	const Vec3 cube_vertex_position[8] =
@@ -60,6 +62,7 @@ private:
 		{ 0, 0, 1 },{ 1, 0, 1 },{ 1, 1, 1 },{ 0, 1, 1 }
 	};
 
+	// 3字节int
 	// 对于任何边，如果一个顶点在表面内，另一个顶点在表面外，则此边与表面相交
 	// 对于立方体的8个顶点中的每一个可以是两个可能的状态：表面内部或外部
 	// 对于任何立方体，都是2^8=256个可能的顶点状态集合
@@ -105,7 +108,7 @@ private:
 	// a2iTriangleConnectionTable以0-5边缘三元组的形式列出所有形式，列表以无效值-1终止。
 	// 例如：a2iTriangleConnectionTable[3]列出corner[0]接corner[1]在表面内部形成的2个三角形，
 	// 但立方体的其余corner则不是。
-	const int a2iTriangleConnectionTable[256][16] =
+	const char a2iTriangleConnectionTable[256][16] =
 	{
 		// 要么连续三个都是-1，要么都不是-1，有-1代表不用画生成mesh啦
 		{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },

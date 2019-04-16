@@ -21,7 +21,7 @@ Mesh MarchingCube::MarchingCubeCore(const float& target_value) const
 			{
 				for (int k = 0; k < cube_size_z - 1; ++k)
 				{
-					MarchingCubeCore(mesh, target_value, i, j, k, step_size, step_size);
+					MarchingCubeCore(mesh, target_value, i, j, k, step_size);
 				}
 			}
 		}
@@ -31,9 +31,9 @@ Mesh MarchingCube::MarchingCubeCore(const float& target_value) const
 	return mesh;
 }
 
-void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
+__forceinline void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	, const uint16& x_index, const uint16& y_index, const uint16& z_index
-	, const float& step_size, const float& scale)const
+	, const float& step_size)const
 {
 	const Vec3 subdivie_point = Vec3(x_index, y_index, z_index)* step_size;	//样本点
 	// 交点坐标，对于算法中的e1-e12。如果不插值的直接取中点的话，是可以预先计算好的
@@ -41,23 +41,23 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	Vec3 isosurface_vertices_normal[12];
 
 	float cube_vertex_value[8]; // cube每个顶点的值
-	int cube8_flag_index = 0; // 标记cube的顶点状态的flag
-	int edge_flag; // 获取cube的交点flag
-	int triangles_num = 0; // cube对应的三角形的数量
-
+	uint8 cube8_flag_index = 0; // 标记cube的顶点状态的flag
 
 	// 创建样本并查找cube顶点在表面内部或外部
 	for (uint8 i = 0; i < 8; ++i)
 	{
 		const uint8 x_offset = a2fVertexOffset[i][0];
 		const uint8 y_offset = a2fVertexOffset[i][1];
-		const uint8 z_offset = a2fVertexOffset[i][2]; //和上面注释掉的代码功能一致
+		const uint8 z_offset = a2fVertexOffset[i][2];
+
+		//const uint32 index = (x_index + x_offset) * cube_size_yz + (y_index + y_offset) * cube_size_z + z_index + z_offset;
+		//cube_vertex_value[i] = data[index];		//这个方法比下面这句话快了很多
 		cube_vertex_value[i] = GetDataUseXYZ(data, x_index + x_offset, y_index + y_offset, z_index + z_offset);
 		if (cube_vertex_value[i] <= target_value)
 			cube8_flag_index |= 1 << i; //位运算
 	}
 
-	edge_flag = aiCubeEdgeFlags[cube8_flag_index];
+	uint16 edge_flag = aiCubeEdgeFlags[cube8_flag_index]; // 获取cube的交点flag
 	if (edge_flag == 0) //如果没有三角形需要画
 	{
 		return;
@@ -76,11 +76,12 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 			}
 			//插值出每条边上的交点
 			isosurface_vertices_pos[i] = subdivie_point + (cube_vertex_position[cube_edges_indices[i][0]]
-				+ cube_edge_direction[i] * a_offset) * scale;
+				+ cube_edge_direction[i] * a_offset) * step_size;
 			isosurface_vertices_normal[i] = CalVerticesNormal(x_index, y_index, z_index);
 		}
 	}
 
+	uint8 triangles_num = 0; // cube对应的三角形的数量
 	for (uint8 i = 0; i < 5; ++i)
 	{
 		if (a2iTriangleConnectionTable[cube8_flag_index][3 * i] < 0) // <0 等价于 ==-1
@@ -100,7 +101,7 @@ void MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
 	}
 }
 
-Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
+__forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
 	, const uint16& y_index, const uint16& z_index)const
 {
 	Vec3 normal;
@@ -118,8 +119,9 @@ Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
 	return normal;
 }
 
-inline float MarchingCube::GetDataUseXYZ(const float * data, const uint16& x
+__forceinline float MarchingCube::GetDataUseXYZ(const float * data, const uint16& x
 	, const uint16& y, const uint16& z)const
 {
-	return data[x * cube_size_yz + y * cube_size_z + z];;
+	const uint32 index = x * cube_size_yz + y * cube_size_z + z;
+	return data[index];
 }

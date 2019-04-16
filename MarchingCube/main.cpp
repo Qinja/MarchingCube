@@ -29,7 +29,7 @@ int main()
 	printf("Load data: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
 	QueryPerformanceCounter(&start);
-		Mesh m = mc.MarchingCubeCore(600000.0f);
+		Mesh m = mc.MarchingCubeCore(20000.0f);
 	QueryPerformanceCounter(&end);
 	printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 

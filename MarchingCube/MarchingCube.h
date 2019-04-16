@@ -10,22 +10,34 @@ class MarchingCube
 {
 public:
 	__forceinline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
-		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z) {}
-	Mesh MarchingCubeCore(const float& target_value)const;
+		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z)
+	{
+		long maxLength = x * y * z;
+		triangleCount = new uint8[maxLength];
+		triangleAddress = new uint32[maxLength];
+		maxLength *= 15;
+		mesh.Vertices = new Vec3[maxLength];
+		mesh.Normals = new Vec3[maxLength];
+	}
+	Mesh MarchingCubeCore(const float& target_value);
 
 private:
+	Mesh mesh;
 	const float *data;
 	const uint16 cube_size_x;
 	const uint16 cube_size_y;
 	const uint16 cube_size_z;
 	const uint16 cube_size_yz;
+	uint8 *triangleCount;
+	uint32 *triangleAddress;
+
 	__forceinline float GetDataUseXYZ(const float *data, const uint16& x,
 		const uint16& y, const uint16& z)const;
 	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
 		, const uint16& y_index, const uint16& z_index)const;
-	__forceinline void MarchingCubeCore(Mesh& mesh, const float& target_value
+	__forceinline uint32 MarchingCubeCore(Mesh& mesh, const float& target_value
 		, const uint16& x_index, const uint16& y_index, const uint16& z_index
-		, const float& step_size)const;
+		, const float& step_size, const uint32 currentCount)const;
 
 	// ∂•µ„Œª÷√
 	const Vec3 cube_vertex_position[8] =

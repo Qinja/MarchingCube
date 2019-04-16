@@ -1,6 +1,6 @@
 #include "MarchingCube.h"
 #include <math.h>
-#include <algorithm>
+#include <Windows.h>
 
 Mesh MarchingCube::MarchingCubeCore(const float& target_value) const
 {
@@ -10,17 +10,24 @@ Mesh MarchingCube::MarchingCubeCore(const float& target_value) const
 	mesh.Normals = new Vec3[maxLength];
 	const int subdivide_cube_num_max = max(max(cube_size_x, cube_size_y), cube_size_z);
 	const float step_size = 1.0f / subdivide_cube_num_max;
-	// 循环遍历每个立方体，立方体数由细分数决定
-	for (int i = 0; i < cube_size_x - 1; ++i)
-	{
-		for (int j = 0; j < cube_size_y - 1; ++j)
+
+	LARGE_INTEGER start; LARGE_INTEGER end; LARGE_INTEGER freq;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&start);
+		// 循环遍历每个立方体，立方体数由细分数决定
+		for (int i = 0; i < cube_size_x - 1; ++i)
 		{
-			for (int k = 0; k < cube_size_z - 1; ++k)
+			for (int j = 0; j < cube_size_y - 1; ++j)
 			{
-				MarchingCubeCore(mesh, target_value, i, j, k, step_size, step_size);
+				for (int k = 0; k < cube_size_z - 1; ++k)
+				{
+					MarchingCubeCore(mesh, target_value, i, j, k, step_size, step_size);
+				}
 			}
 		}
-	}
+	QueryPerformanceCounter(&end);
+	printf("MarchingCube Core: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+
 	return mesh;
 }
 

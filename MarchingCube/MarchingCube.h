@@ -7,13 +7,11 @@ class MarchingCube
 {
 public:
 	__forceinline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
-		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z), max_threads(omp_get_max_threads())
+		:data(inData), cube_size_x(x), cube_size_y(y)
+		, cube_size_z(z), cube_size_yz(y*z), max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
 	{
-		//mesh.Vertices = new Vec3[maxLength];
-		//mesh.Normals = new Vec3[maxLength];
 		const uint16 uniform = ((x - 1) - (x - 1) % max_threads) / max_threads + 1;
 		const long maxLength = uniform *  y * z * 15;
-
 		threadVertices = new Vec3*[max_threads];
 		threadNormals = new Vec3*[max_threads];
 		threadVerticesCount = new uint32[max_threads];
@@ -22,15 +20,12 @@ public:
 			threadVertices[i] = new Vec3[maxLength];
 			threadNormals[i] = new Vec3[maxLength];
 		}
-		step_size = 1.0f / max(max(x, y), z);
-
 	}
 	void MarchingCubeCore(const float& target_value);
 	__forceinline void SaveToFile(const string& filePath)
 	{
 		Mesh::SaveObjToFile(filePath, max_threads, threadVerticesCount, threadVertices, threadNormals);
 	}
-
 	__forceinline Mesh ToMesh()
 	{
 		Mesh m;
@@ -53,22 +48,19 @@ public:
 		}
 		return m;
 	}
-
 private:
 	const float *data;
 	const uint16 cube_size_x;
 	const uint16 cube_size_y;
 	const uint16 cube_size_z;
 	const uint16 cube_size_yz;
-	const int max_threads;
-	float step_size;
+	const uint8 max_threads;
+	const float step_size;
 
 	Vec3** threadVertices;
 	Vec3** threadNormals;
 	uint32* threadVerticesCount;
 
-	//__forceinline float GetDataUseXYZ(const float *data, const uint16& x,
-	//	const uint16& y, const uint16& z)const;
 	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
 		, const uint16& y_index, const uint16& z_index)const;
 	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const uint16& x_index

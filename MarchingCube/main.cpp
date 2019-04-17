@@ -24,9 +24,14 @@ int main()
 
 	QueryPerformanceCounter(&start);
 		const float * data = readFromFilePath("./pet_raw.dat", size);
-		MarchingCube mc(data, 200, 160, 160);
 	QueryPerformanceCounter(&end);
 	printf("Load data: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+
+
+	QueryPerformanceCounter(&start);
+		MarchingCube mc(data, 200, 160, 160);
+	QueryPerformanceCounter(&end);
+	printf("Init MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
 	QueryPerformanceCounter(&start);
 		mc.MarchingCubeCore(20000.0f);

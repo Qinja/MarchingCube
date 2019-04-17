@@ -40,13 +40,17 @@ int main()
 
 
 	//DEBUG
+	int k = 0;
 	for (int i = 0; i < 100; i++)
 	{
 		QueryPerformanceCounter(&start);
 		mc.MarchingCubeCore(20000.0f);
 		QueryPerformanceCounter(&end);
-		printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+		int t = (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart);
+		k += t;
+		printf("MarchingCube: %d ms\n", t);
 	}
+	printf("MarchingCube Total: %d ms\n", k);
 
 	QueryPerformanceCounter(&start);
 		mc.SaveToFile("./output.obj");

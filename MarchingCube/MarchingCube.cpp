@@ -100,7 +100,7 @@ __forceinline void MarchingCube::MarchingCubeCore(const uint8& threadIndex
 __forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
 	, const uint16& y_index, const uint16& z_index)const
 {
-	Vec3 normal;
+	
 	//const uint32 standard = x_index * cube_size_yz + y_index * cube_size_z + z_index;
 	//const uint32 x1 = standard - cube_size_yz;
 	//const uint32 x2 = standard + cube_size_yz;
@@ -132,18 +132,17 @@ __forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
 		const uint32 y2 = x_index * cube_size_yz + y_index * cube_size_z + z_index + cube_size_z;
 		const uint32 z1 = x_index * cube_size_yz + y_index * cube_size_z + z_index - 1;
 		const uint32 z2 = x_index * cube_size_yz + y_index * cube_size_z + z_index + 1;
-
-		normal.x = data[x1] - data[x2];
-		normal.y = data[y1] - data[y2];
-		normal.z = data[z1] - data[z2];
-		normal.normalize();
+		
+		Vec3 normal(data[x1] - data[x2], data[y1] - data[y2],data[z1] - data[z2]);
+		normal.Normalize();
+		return normal;
 	}
 
 	//这两个速度差不多
 	//normal.x = GetDataUseXYZ(data, x_index - 1, y_index, z_index) - GetDataUseXYZ(data, x_index + 1, y_index, z_index);
 	//normal.y = GetDataUseXYZ(data, x_index, y_index - 1, z_index) - GetDataUseXYZ(data, x_index, y_index + 1, z_index);
 	//normal.z = GetDataUseXYZ(data, x_index, y_index, z_index - 1) - GetDataUseXYZ(data, x_index, y_index, z_index + 1);
-	return normal;
+	return Vec3();
 }
 
 //__forceinline float MarchingCube::GetDataUseXYZ(const float * data, const uint16& x

@@ -1,6 +1,5 @@
 #pragma once
 #include <math.h>
-
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
@@ -10,27 +9,25 @@ class Vec3
 {
 public:
 	__forceinline Vec3() { x = 0.0f; y = 0.0f; z = 0.0f; }
-	__forceinline Vec3(float x, float y, float z) :x(x), y(y), z(z) {}
-	__forceinline float Normalize()
+	__forceinline Vec3(const float& x, const float& y, const float& z) :x(x), y(y), z(z) {}
+	__forceinline void Normalize()
 	{
-		const float m = 1.0f / Magnitude();
+		const float m = sqrtf(x * x + y * y + z * z);
 		if (m > 0.0f)
 		{
-			*this = *this * (1.0f / m);
+			const float d = 1.0f /m;
+			x *= d;
+			y *= d;
+			z *= d;
 		}
-		return m;
 	}
-	__forceinline Vec3 operator*(float f) const
+	__forceinline Vec3 operator*(const float& f) const
 	{
 		return Vec3(x * f, y * f, z * f);
 	}
-	__forceinline Vec3 operator+(Vec3 v) const
+	__forceinline Vec3 operator+(const Vec3& v) const
 	{
 		return Vec3(x + v.x, y + v.y, z + v.z);
-	}
-	__forceinline float Magnitude() const
-	{
-		return sqrtf(x * x + y * y + z * z);
 	}
 	float x;
 	float y;

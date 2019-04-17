@@ -1,32 +1,30 @@
 #pragma once
-#include "Mesh.h"
 #include <omp.h>
+#include "Mesh.h"
 #define max(a,b)   (((a) > (b)) ? (a) : (b))
-
 class MarchingCube
 {
 public:
-	__forceinline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
-		:data(inData), cube_size_x(x), cube_size_y(y)
-		, cube_size_z(z), cube_size_yz(y*z), max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
+	__forceinline MarchingCube(const float*& inData, const uint16& x, const uint16& y, const uint16& z)
+		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z)
+		, max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
 	{
-		const uint16 uniform = ((x - 1) - (x - 1) % max_threads) / max_threads + 1;
-		const long maxLength = uniform * cube_size_yz * 15;
+		const uint16 uniform = ((x - 2) - (x - 2) % max_threads) / max_threads + 1;
+		const long threadDataLength = uniform * cube_size_yz * 15;	//最多x5个面，每个面x3个点
 		threadVertices = new Vec3*[max_threads];
 		threadNormals = new Vec3*[max_threads];
 		threadVerticesCount = new uint32[max_threads];
+		threadWorkingNum = new uint16[max_threads];
+#ifndef _DEBUG
+#pragma omp parallel for num_threads(max_threads) schedule (static)
+#endif // _DEBUG
 		for (int i = 0; i < max_threads; i++)
 		{
-			threadVertices[i] = new Vec3[maxLength];
-			threadNormals[i] = new Vec3[maxLength];
+			threadVertices[i] = new Vec3[threadDataLength];
+			threadNormals[i] = new Vec3[threadDataLength];
 		}
 	}
-	void MarchingCubeCore(const float& target_value);
-	__forceinline void SaveToFile(const string& filePath)
-	{
-		Mesh::SaveObjToFile(filePath, max_threads, threadVerticesCount, threadVertices, threadNormals);
-	}
-	__forceinline Mesh ToMesh()
+	__forceinline Mesh ToMesh()const
 	{
 		Mesh m;
 		uint32 VerticesCount = 0;
@@ -48,7 +46,14 @@ public:
 		}
 		return m;
 	}
+	void MarchingCubeCore(const float& target_value);
+
 private:
+	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
+		, const uint16& y_index, const uint16& z_index)const;
+	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const uint16& x_index
+		, const uint16& y_index, const uint16& z_index);
+
 	const float *data;
 	const uint16 cube_size_x;
 	const uint16 cube_size_y;
@@ -60,11 +65,7 @@ private:
 	Vec3** threadVertices;
 	Vec3** threadNormals;
 	uint32* threadVerticesCount;
-
-	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
-		, const uint16& y_index, const uint16& z_index)const;
-	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const uint16& x_index
-		, const uint16& y_index, const uint16& z_index);
+	uint16* threadWorkingNum;
 
 	// 顶点位置
 	const Vec3 cube_vertex_position[8] =
@@ -78,7 +79,6 @@ private:
 		{ 1.0f, 1.0f, 1.0f },
 		{ 0.0f, 1.0f, 1.0f }
 	};
-
 	// 组成12条边的顶点， 值代表cube_vertex_position[]的索引
 	const uint8 cube_edges_indices[12][2] =
 	{
@@ -86,7 +86,6 @@ private:
 		{ 4, 5 },{ 5, 6 },{ 6, 7 },{ 7, 4 },
 		{ 0, 4 },{ 1, 5 },{ 2, 6 },{ 3, 7 }
 	};
-
 	// 12条边的方向
 	const Vec3 cube_edge_direction[12] =
 	{
@@ -94,13 +93,11 @@ private:
 		{ 1.0f,  0.0f,  0.0 },{ 0.0f,  1.0f,  0.0 },{ -1.0f, 0.0f,  0.0 },{ 0.0f,  -1.0f, 0.0 },
 		{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 }
 	};
-
 	const uint8 a2fVertexOffset[8][3] =
 	{
 		{ 0, 0, 0 },{ 1, 0, 0 },{ 1, 1, 0 },{ 0, 1, 0 },
 		{ 0, 0, 1 },{ 1, 0, 1 },{ 1, 1, 1 },{ 0, 1, 1 }
 	};
-
 	// 3字节int
 	// 对于任何边，如果一个顶点在表面内，另一个顶点在表面外，则此边与表面相交
 	// 对于立方体的8个顶点中的每一个可以是两个可能的状态：表面内部或外部
@@ -142,7 +139,6 @@ private:
 		0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c, 0x605, 0x50f, 0x406, 0x30a,
 		0x203, 0x109, 0x000
 	};
-
 	// 对于aiCubeEdgeFlags中列出的每个可能的顶点状态，边缘交点都有一个特定的分割三角形。
 	// a2iTriangleConnectionTable以0-5边缘三元组的形式列出所有形式，列表以无效值-1终止。
 	// 例如：a2iTriangleConnectionTable[3]列出corner[0]接corner[1]在表面内部形成的2个三角形，
@@ -408,3 +404,4 @@ private:
 		{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 	};
 };
+#undef max

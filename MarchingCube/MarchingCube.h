@@ -1,30 +1,32 @@
 #pragma once
 #include "Mesh.h"
 #include <omp.h>
+#include "Vec3SIMD.h"
 #define max(a,b)   (((a) > (b)) ? (a) : (b))
 
 class MarchingCube
 {
 public:
 	__forceinline MarchingCube(const float* inData, const uint16& x, const uint16& y, const uint16& z)
-		:data(inData), cube_size_x(x), cube_size_y(y)
-		, cube_size_z(z), cube_size_yz(y*z), max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
+		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z)
+		, sizeTemp(cube_size_yz, cube_size_z, 1)
+		, max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
 	{
 		const uint16 uniform = ((x - 1) - (x - 1) % max_threads) / max_threads + 1;
-		const long maxLength = uniform *  y * z * 15;
-		threadVertices = new Vec3*[max_threads];
-		threadNormals = new Vec3*[max_threads];
+		const long maxLength = uniform * cube_size_y * 15;
+		threadVertices = new Vec3_Float32_SIMD*[max_threads];
+		threadNormals = new Vec3_Float32_SIMD*[max_threads];
 		threadVerticesCount = new uint32[max_threads];
 		for (int i = 0; i < max_threads; i++)
 		{
-			threadVertices[i] = new Vec3[maxLength];
-			threadNormals[i] = new Vec3[maxLength];
+			threadVertices[i] = new Vec3_Float32_SIMD[maxLength];
+			threadNormals[i] = new Vec3_Float32_SIMD[maxLength];
 		}
 	}
 	void MarchingCubeCore(const float& target_value);
 	__forceinline void SaveToFile(const string& filePath)
 	{
-		Mesh::SaveObjToFile(filePath, max_threads, threadVerticesCount, threadVertices, threadNormals);
+		//Mesh::SaveObjToFile(filePath, max_threads, threadVerticesCount, threadVertices, threadNormals);
 	}
 	__forceinline Mesh ToMesh()
 	{
@@ -42,8 +44,8 @@ public:
 		{
 			for (uint32 i = 0; i < threadVerticesCount[t]; i++, k++)
 			{
-				m.Vertices[k] = threadVertices[t][i];
-				m.Normals[k] = threadNormals[t][i];
+				m.Vertices[k] = threadVertices[t][i].ToVec3();
+				m.Normals[k] = threadNormals[t][i].ToVec3();
 			}
 		}
 		return m;
@@ -54,20 +56,19 @@ private:
 	const uint16 cube_size_y;
 	const uint16 cube_size_z;
 	const uint16 cube_size_yz;
+	const Vec3_Int32_SIMD sizeTemp;
 	const uint8 max_threads;
 	const float step_size;
 
-	Vec3** threadVertices;
-	Vec3** threadNormals;
+	Vec3_Float32_SIMD** threadVertices;
+	Vec3_Float32_SIMD** threadNormals;
 	uint32* threadVerticesCount;
 
-	__forceinline Vec3 CalVerticesNormal(const uint16& x_index
-		, const uint16& y_index, const uint16& z_index)const;
-	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const uint16& x_index
-		, const uint16& y_index, const uint16& z_index);
+	__forceinline Vec3_Float32_SIMD CalVerticesNormal(const Vec3_Int32_SIMD& index)const;
+	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const Vec3_Int32_SIMD& index);
 
 	// 顶点位置
-	const Vec3 cube_vertex_position[8] =
+	const Vec3_Float32_SIMD cube_vertex_position[8] =
 	{
 		{ 0.0f, 0.0f, 0.0f },
 		{ 1.0f, 0.0f, 0.0f },
@@ -88,14 +89,14 @@ private:
 	};
 
 	// 12条边的方向
-	const Vec3 cube_edge_direction[12] =
+	const Vec3_Float32_SIMD cube_edge_direction[12] =
 	{
 		{ 1.0f,  0.0f,  0.0 },{ 0.0f,  1.0f,  0.0 },{ -1.0f, 0.0f,  0.0 },{ 0.0f,  -1.0f, 0.0 },
 		{ 1.0f,  0.0f,  0.0 },{ 0.0f,  1.0f,  0.0 },{ -1.0f, 0.0f,  0.0 },{ 0.0f,  -1.0f, 0.0 },
 		{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 },{ 0.0f,  0.0f,  1.0 }
 	};
 
-	const uint8 a2fVertexOffset[8][3] =
+	const Vec3_Int32_SIMD a2fVertexOffset[8] =
 	{
 		{ 0, 0, 0 },{ 1, 0, 0 },{ 1, 1, 0 },{ 0, 1, 0 },
 		{ 0, 0, 1 },{ 1, 0, 1 },{ 1, 1, 1 },{ 0, 1, 1 }

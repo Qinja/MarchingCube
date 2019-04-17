@@ -18,6 +18,7 @@ const float* readFromFilePath(const string& path, const long& size)
 
 int main()
 {
+
 	LARGE_INTEGER start; LARGE_INTEGER end; LARGE_INTEGER freq;
 	QueryPerformanceFrequency(&freq);
 	const long size = 160 * 160 * 200;
@@ -52,22 +53,20 @@ int main()
 	}
 	printf("MarchingCube Total: %d ms\n", k);
 
-	QueryPerformanceCounter(&start);
-		mc.SaveToFile("./output.obj");
-	QueryPerformanceCounter(&end);
-	printf("Save model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
-
-
-
-	QueryPerformanceCounter(&start);
-		Mesh m = mc.ToMesh();
-	QueryPerformanceCounter(&end);
-	printf("To Mesh: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
-
-	QueryPerformanceCounter(&start);
-		m.SaveObjToFile("./output2.obj");
-	QueryPerformanceCounter(&end);
-	printf("Mesh Save Model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+	//QueryPerformanceCounter(&start);
+	//	mc.SaveToFile("./output.obj");
+	//QueryPerformanceCounter(&end);
+	//printf("Save model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+	//
+	//QueryPerformanceCounter(&start);
+	//	Mesh m = mc.ToMesh();
+	//QueryPerformanceCounter(&end);
+	//printf("To Mesh: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+	//
+	//QueryPerformanceCounter(&start);
+	//	m.SaveObjToFile("./output2.obj");
+	//QueryPerformanceCounter(&end);
+	//printf("Mesh Save Model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
 	getchar();
 	return 0;

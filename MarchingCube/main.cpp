@@ -29,24 +29,37 @@ int main()
 	printf("Load data: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
 	QueryPerformanceCounter(&start);
-		Mesh m = mc.MarchingCubeCore(20000.0f);
+		mc.MarchingCubeCore(20000.0f);
 	QueryPerformanceCounter(&end);
 	printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 
 
 	//DEBUG
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		QueryPerformanceCounter(&start);
-		Mesh m = mc.MarchingCubeCore(20000.0f);
+		mc.MarchingCubeCore(20000.0f);
 		QueryPerformanceCounter(&end);
 		printf("MarchingCube: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
 	}
 
 	QueryPerformanceCounter(&start);
-		m.SaveObjToFile("./output.obj");
+		mc.SaveToFile("./output.obj");
 	QueryPerformanceCounter(&end);
 	printf("Save model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+
+
+
+	QueryPerformanceCounter(&start);
+		Mesh m = mc.ToMesh();
+	QueryPerformanceCounter(&end);
+	printf("To Mesh: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+
+	QueryPerformanceCounter(&start);
+		m.SaveObjToFile("./output2.obj");
+	QueryPerformanceCounter(&end);
+	printf("Mesh Save Model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
+
 	getchar();
 	return 0;
 }

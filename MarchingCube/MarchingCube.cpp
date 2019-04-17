@@ -1,40 +1,32 @@
 #include "MarchingCube.h"
 #include <math.h>
-#include <omp.h>
-#define max(a,b)   (((a) > (b)) ? (a) : (b))
 
-Mesh MarchingCube::MarchingCubeCore(const float& target_value)
+void MarchingCube::MarchingCubeCore(const float& target_value)
 {
-	const float step_size = 1.0f / max(max(cube_size_x, cube_size_y), cube_size_z);
-	// 循环遍历每个立方体，立方体数由细分数决定
+	for (int i = 0; i < max_threads; i++)
+	{
+		threadVerticesCount[i] = 0;
+	}
 #ifndef _DEBUG
-	const int max_threads = omp_get_max_threads();
 	#pragma omp parallel for num_threads(max_threads) schedule (static)
 #endif // _DEBUG
+	// 循环遍历每个立方体，立方体数由细分数决定
 	for (int i = 0; i < cube_size_x - 1; ++i)
 	{
+		const uint8 tIndex = omp_get_thread_num();
 		for (int j = 0; j < cube_size_y - 1; ++j)
 		{
 			for (int k = 0; k < cube_size_z - 1; ++k)
 			{
-				const uint32 standard = i * cube_size_yz + j * cube_size_z + k;
-				const uint64 tuple = MarchingCubeCore(mesh, target_value, i, j, k, standard, step_size);
-				const uint8 triangles_edge_indices_num = tuple >> 32;
-				const uint32 currentAddress = tuple & (uint32)(-1);
-				triangleAddress[standard] = currentAddress;
-				triangleCount[standard] = triangles_edge_indices_num;
+				MarchingCubeCore(tIndex, target_value, i, j, k);
 			}
 		}
 	}
-
-	//printf("VertexCount: %d\n", VerticesCount);
-	//mesh.VerticesCount = VerticesCount;
-	return mesh;
 }
 
-__forceinline uint64 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& target_value
-	, const uint16& x_index, const uint16& y_index, const uint16& z_index
-	, const uint32& standard, const float& step_size)const
+__forceinline void MarchingCube::MarchingCubeCore(const uint8& threadIndex
+	, const float& target_value, const uint16& x_index
+	, const uint16& y_index, const uint16& z_index)
 {
 	const Vec3 subdivie_point = Vec3(x_index, y_index, z_index)* step_size;	//样本点
 	// 交点坐标，对于算法中的e1-e12。如果不插值的直接取中点的话，是可以预先计算好的
@@ -63,7 +55,7 @@ __forceinline uint64 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& tar
 	uint16 edge_flag = aiCubeEdgeFlags[cube8_flag_index]; // 获取cube的交点flag
 	if (edge_flag == 0) //如果没有三角形需要画
 	{
-		return 0;
+		return;
 	}
 
 	for (uint8 i = 0; i < 12; ++i) 
@@ -96,15 +88,13 @@ __forceinline uint64 MarchingCube::MarchingCubeCore(Mesh& mesh, const float& tar
 
 	//cube对应三角形的边的索引数量
 	const uint8 triangles_edge_indices_num = triangles_num * 3;
-	const uint64 currentAddress = standard * 15;
+	const uint32 currentCount = threadVerticesCount[threadIndex];
 	for (uint8 i = 0; i < triangles_edge_indices_num; ++i)
 	{
-		mesh.Vertices[currentAddress + i] = isosurface_vertices_pos[a2iTriangleConnectionTable[cube8_flag_index][i]];
-		mesh.Normals[currentAddress + i] = isosurface_vertices_normal[a2iTriangleConnectionTable[cube8_flag_index][i]];
+		threadVertices[threadIndex][currentCount + i] = isosurface_vertices_pos[a2iTriangleConnectionTable[cube8_flag_index][i]];
+		threadNormals[threadIndex][currentCount + i] = isosurface_vertices_normal[a2iTriangleConnectionTable[cube8_flag_index][i]];
 	}
-	uint64 tuple = currentAddress + (uint64)(((uint64)triangles_edge_indices_num) << 32);
-	return tuple;
-	//return triangles_edge_indices_num;
+	threadVerticesCount[threadIndex] = currentCount + triangles_edge_indices_num;
 }
 
 __forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
@@ -156,9 +146,9 @@ __forceinline Vec3 MarchingCube::CalVerticesNormal(const uint16& x_index
 	return normal;
 }
 
-__forceinline float MarchingCube::GetDataUseXYZ(const float * data, const uint16& x
-	, const uint16& y, const uint16& z)const
-{
-	const uint32 index = x * cube_size_yz + y * cube_size_z + z;
-	return data[index];
-}
+//__forceinline float MarchingCube::GetDataUseXYZ(const float * data, const uint16& x
+//	, const uint16& y, const uint16& z)const
+//{
+//	const uint32 index = x * cube_size_yz + y * cube_size_z + z;
+//	return data[index];
+//}

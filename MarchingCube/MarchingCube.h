@@ -11,7 +11,7 @@ public:
 		, cube_size_z(z), cube_size_yz(y*z), max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
 	{
 		const uint16 uniform = ((x - 1) - (x - 1) % max_threads) / max_threads + 1;
-		const long maxLength = uniform *  y * z * 15;
+		const long maxLength = uniform * cube_size_yz * 15;
 		threadVertices = new Vec3*[max_threads];
 		threadNormals = new Vec3*[max_threads];
 		threadVerticesCount = new uint32[max_threads];

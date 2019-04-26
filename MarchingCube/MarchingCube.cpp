@@ -30,11 +30,6 @@ __forceinline void MarchingCube::MarchingCubeCore(const uint8& threadIndex
 	, const float& target_value, const uint16& x_index
 	, const uint16& y_index, const uint16& z_index)
 {
-	const Vec3 subdivie_point = Vec3(x_index, y_index, z_index)* step_size;	//样本点
-	// 交点坐标，对于算法中的e1-e12。如果不插值的直接取中点的话，是可以预先计算好的
-	Vec3 isosurface_vertices_pos[12];
-	Vec3 isosurface_vertices_normal[12];
-
 	float cube_vertex_value[8]; // cube每个顶点的值
 	uint8 cube8_flag_index = 0; // 标记cube的顶点状态的flag
 
@@ -54,6 +49,11 @@ __forceinline void MarchingCube::MarchingCubeCore(const uint8& threadIndex
 	{
 		return;
 	}
+
+	// 交点坐标，对于算法中的e1-e12。如果不插值的直接取中点的话，是可以预先计算好的
+	const Vec3 subdivie_point = Vec3(x_index, y_index, z_index)* step_size;	//样本点
+	Vec3 isosurface_vertices_pos[12];
+	Vec3 isosurface_vertices_normal[12];
 
 	uint16 edge_flag = aiCubeEdgeFlags[cube8_flag_index]; // 获取cube的交点flag
 

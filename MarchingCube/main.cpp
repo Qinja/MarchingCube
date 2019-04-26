@@ -43,7 +43,8 @@ int main()
 		m.SaveObjToFile("./output.obj");
 	QueryPerformanceCounter(&end);
 	printf("Mesh Save Model: %d ms\n", (int)((end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart));
-
+	mc.DestoryMarchingCube();
+	delete data;
 	getchar();
 	return 0;
 }

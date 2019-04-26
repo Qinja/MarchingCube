@@ -5,6 +5,10 @@
 class MarchingCube
 {
 public:
+
+	Vec3* oldNormals = NULL;
+	Vec3* oldVertices = NULL;
+
 	__forceinline MarchingCube(const float*& inData, const uint16& x, const uint16& y, const uint16& z)
 		:data(inData), cube_size_x(x), cube_size_y(y), cube_size_z(z), cube_size_yz(y*z)
 		, max_threads((uint8)omp_get_max_threads()), step_size(1.0f / max(max(x, y), z))
@@ -24,8 +28,10 @@ public:
 			threadNormals[i] = new Vec3[threadDataLength];
 		}
 	}
-	__forceinline Mesh ToMesh()const
+	__forceinline Mesh ToMesh()
 	{
+		delete[] oldNormals;
+		delete[] oldVertices;
 		Mesh m;
 		uint32 VerticesCount = 0;
 		for (uint8 t = 0; t < max_threads; t++)
@@ -44,10 +50,26 @@ public:
 				m.Normals[k] = threadNormals[t][i];
 			}
 		}
+		oldNormals = m.Normals;
+		oldVertices = m.Vertices;
 		return m;
 	}
 	void MarchingCubeCore(const float& target_value);
 
+	void DestoryMarchingCube()
+	{
+		delete[] oldNormals;
+		delete[] oldVertices;
+		for (uint8 i = 0; i < max_threads; i++)
+		{
+			delete[] threadVertices[i];
+			delete[] threadNormals[i];
+		}
+		delete[] threadVertices;
+		delete[] threadNormals;
+		delete[] threadVerticesCount;
+		delete[] threadWorkingNum;
+	}
 private:
 	__forceinline void MarchingCubeCore(const uint8& threadIndex, const float& target_value, const uint16& x_index
 		, const uint16& y_index, const uint16& z_index);

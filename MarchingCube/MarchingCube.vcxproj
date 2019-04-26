@@ -66,14 +66,11 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <HeapReserveSize>2147483648</HeapReserveSize>
-      <HeapCommitSize>2147483648</HeapCommitSize>
-      <StackReserveSize>2147483648</StackReserveSize>
-      <StackCommitSize>2147483648</StackCommitSize>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
